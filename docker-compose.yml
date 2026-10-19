@@ -1,0 +1,55 @@
+services:
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+    ports:
+      - "18082:18082"
+    environment:
+      PORT: "18082"
+      UPSTREAM_USERS: http://user-service:5001
+      UPSTREAM_PRODUCTS: http://product-service:5002
+      UPSTREAM_ORDERS: http://order-service:5003
+      UPSTREAM_PAYMENTS: http://payment-service:5004
+      UPSTREAM_NOTIFICATIONS: http://notification-service:5005
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+      - notification-service
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./services/user-service
+    expose:
+      - "5001"
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./services/product-service
+    expose:
+      - "5002"
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: ./services/order-service
+    expose:
+      - "5003"
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+    expose:
+      - "5004"
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+    expose:
+      - "5005"
+    restart: unless-stopped
