@@ -1,0 +1,25 @@
+# Node.js dependencies
+node_modules/
+**/node_modules/
+
+# Environment files and secrets
+.env
+.env.*
+!.env.example
+
+# Generated frontend builds
+dist/
+build/
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Local editor settings
+.vscode/
+.idea/

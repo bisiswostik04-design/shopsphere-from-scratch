@@ -1,0 +1,194 @@
+import { useEffect, useMemo, useState } from 'react'
+import './App.css'
+
+const API_URL = 'http://localhost:18082/api/products'
+
+function App() {
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('All')
+  const [cart, setCart] = useState([])
+  const [wishlist, setWishlist] = useState([])
+
+  useEffect(() => {
+    fetch(API_URL)
+      .then((response) => {
+        if (!response.ok) throw new Error(`API returned ${response.status}`)
+        return response.json()
+      })
+      .then((data) => setProducts(data.products || []))
+      .catch(() => setError('Could not load products. Make sure the API Gateway is running on port 18082.'))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const categories = ['All', ...new Set(products.map((p) => p.category).filter(Boolean))]
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesCategory = category === 'All' || product.category === category
+      const matchesSearch = `${product.name} ${product.description || ''}`
+        .toLowerCase()
+        .includes(search.toLowerCase())
+      return matchesCategory && matchesSearch
+    })
+  }, [products, category, search])
+
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
+
+  function addToCart(product) {
+    setCart((current) => {
+      const existing = current.find((item) => item._id === product._id)
+      if (existing) {
+        return current.map((item) =>
+          item._id === product._id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        )
+      }
+      return [...current, { ...product, quantity: 1 }]
+    })
+  }
+
+  function toggleWishlist(id) {
+    setWishlist((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    )
+  }
+
+  return (
+    <div className="shop">
+      <div className="announcement">
+        ✦ FREE SHIPPING ON ORDERS OVER ₹4,999 &nbsp; · &nbsp; YOUR EVERYDAY, UPGRADED
+      </div>
+
+      <header className="header">
+        <a className="brand" href="#home">shop<span>sphere</span><i>.</i></a>
+        <div className="search-box">
+          <span>⌕</span>
+          <input
+            aria-label="Search products"
+            placeholder="Search products, brands and more..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <kbd>SEARCH</kbd>
+        </div>
+        <div className="header-actions">
+          <button className="header-link" onClick={() => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })}>
+            ♡ <span>Wishlist ({wishlist.length})</span>
+          </button>
+          <button className="header-link cart-link" onClick={() => alert(cart.length ? cart.map((item) => `${item.name} × ${item.quantity}`).join('\n') + `\n\nTotal: ₹${cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toLocaleString('en-IN')}` : 'Your cart is empty.')}>
+            🛍 <span>Bag ({cartCount})</span>
+          </button>
+        </div>
+      </header>
+
+      <nav className="nav">
+        <a href="#products">New arrivals</a>
+        <a href="#products">Bestsellers</a>
+        <a href="#products">Electronics</a>
+        <a href="#products">Fashion</a>
+        <a href="#products">Home & living</a>
+        <span className="nav-offer">THE GOOD LIFE, FOR LESS ↗</span>
+      </nav>
+
+      <main id="home">
+        <section className="hero">
+          <div className="hero-content">
+            <span className="eyebrow"><span className="dot"></span> THE NEW SEASON EDIT</span>
+            <h1>Find your next<br /> <em>favourite thing.</em></h1>
+            <p>Thoughtful picks. Everyday essentials. Unexpected finds. All the things that make life a little more you.</p>
+            <a className="hero-button" href="#products">Explore the collection <span>↗</span></a>
+            <div className="hero-footnote"><span>✳</span> Curated for the way you live.</div>
+          </div>
+          <div className="hero-art">
+            <div className="art-orbit orbit-one"></div>
+            <div className="art-orbit orbit-two"></div>
+            <div className="art-sun"></div>
+            <div className="art-card card-back"><span>GOOD</span><b>THINGS</b><small>EVERY DAY.</small></div>
+            <div className="art-card card-front"><span>THE</span><b>EVERYDAY</b><small>COLLECTION Nº 01</small></div>
+            <div className="art-sticker">MADE FOR<br />YOUR MOMENT <span>✳</span></div>
+            <div className="art-caption">A LITTLE SOMETHING<br />FOR EVERY SIDE OF YOU.</div>
+          </div>
+          <div className="hero-number">01 <span>— 04</span></div>
+        </section>
+
+        <section className="benefits">
+          <div><span>✳</span><p><b>Good finds, fair prices</b><small>Quality worth every rupee</small></p></div>
+          <div><span>↗</span><p><b>Delivery you can count on</b><small>Carefully packed, to your door</small></p></div>
+          <div><span>♡</span><p><b>Shopping made simple</b><small>Less scrolling, more discovering</small></p></div>
+          <div><span>♧</span><p><b>Here for the long run</b><small>Support that actually helps</small></p></div>
+        </section>
+
+        <section className="products-section" id="products">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">A FEW VERY GOOD THINGS</span>
+              <h2>Meet your <em>next favourite.</em></h2>
+              <p>Real finds from our current collection.</p>
+            </div>
+            <span className="product-count">{products.length} PRODUCTS <span>↘</span></span>
+          </div>
+
+          <div className="filter-row">
+            <div className="filters">
+              {categories.map((item) => (
+                <button key={item} className={category === item ? 'filter active' : 'filter'} onClick={() => setCategory(item)}>
+                  {item}
+                </button>
+              ))}
+            </div>
+            <span className="showing">SHOWING {filteredProducts.length} ITEMS</span>
+          </div>
+
+          {loading && <div className="state-message">Finding good things for you…</div>}
+          {error && <div className="state-message error">{error}<br /><button className="retry" onClick={() => window.location.reload()}>Try again</button></div>}
+          {!loading && !error && filteredProducts.length === 0 && <div className="state-message">No products match that search. Try another term.</div>}
+
+          <div className="product-grid">
+            {filteredProducts.map((product, index) => (
+              <article className="product-card" key={product._id}>
+                <div className={`product-visual visual-${index % 6}`}>
+                  <span className="product-tag">{index % 3 === 0 ? 'A GOOD FIND' : index % 3 === 1 ? 'EVERYDAY PICK' : 'JUST RIGHT'}</span>
+                  <button
+                    className={wishlist.includes(product._id) ? 'wish-button wished' : 'wish-button'}
+                    aria-label="Toggle wishlist"
+                    onClick={() => toggleWishlist(product._id)}
+                  >{wishlist.includes(product._id) ? '♥' : '♡'}</button>
+                  <span className="visual-symbol">{['✳', '◉', '◈', '✦', '⬡', '❋'][index % 6]}</span>
+                  <span className="visual-category">{product.category || 'DISCOVER'}</span>
+                </div>
+                <div className="product-info">
+                  <span className="product-category">{product.category || 'EVERYDAY ESSENTIALS'}</span>
+                  <h3>{product.name}</h3>
+                  <p>{product.description || 'A thoughtful pick for your everyday.'}</p>
+                  <div className="product-bottom">
+                    <span className="price">₹{Number(product.price).toLocaleString('en-IN')}</span>
+                    <button className="add-button" onClick={() => addToCart(product)} aria-label={`Add ${product.name} to bag`}>＋</button>
+                  </div>
+                  <small className={product.stock > 0 ? 'stock' : 'stock out'}>{product.stock > 0 ? `${product.stock} available` : 'Out of stock'}</small>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="closing-banner">
+          <span>✳ A LITTLE MORE YOU</span>
+          <h2>Good things are<br /><em>closer than you think.</em></h2>
+          <a href="#products">Find your thing ↗</a>
+        </section>
+      </main>
+
+      <footer className="footer">
+        <a className="brand" href="#home">shop<span>sphere</span><i>.</i></a>
+        <p>Everyday things. A little more extraordinary.</p>
+        <span>MADE FOR EVERYDAY LIFE · © 2026 SHOPSPHERE</span>
+      </footer>
+    </div>
+  )
+}
+
+export default App
